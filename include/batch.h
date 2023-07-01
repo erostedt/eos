@@ -6,7 +6,7 @@
 typedef struct eos_batch4f
 {
     eos_tensor3f *tensors;
-    size_t count;
+    int count;
 } eos_batch4f;
 
 #endif
