@@ -14,7 +14,6 @@ Eos_Batch4f eos_batch_alloc_contigious(size_t count, size_t height, size_t width
 Eos_Batch4f eos_batch_alloc_spread(size_t count, size_t height, size_t width, size_t channels)
 {
     Eos_Tensor3f *features = (Eos_Tensor3f*)malloc(count * sizeof(Eos_Tensor3f));
-    size_t stepsize = height * width * channels;
     for (size_t index = 0; index < count; index++)
         features[index] = eos_tensor3f_alloc(height, width, channels);
     return (Eos_Batch4f) {.tensors=features, .count=count};
