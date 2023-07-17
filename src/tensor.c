@@ -11,7 +11,7 @@
                        } while(0)
 
 
-eos_tensor3f eos_tensor3f_alloc(size_t rows, size_t cols, size_t channels)
+Eos_Tensor3f eos_tensor3f_alloc(size_t rows, size_t cols, size_t channels)
 {
     assert(rows > 0 && cols > 0 && channels > 0);
     float *data = (float *)malloc(rows * cols *  channels * sizeof(float));
@@ -19,10 +19,10 @@ eos_tensor3f eos_tensor3f_alloc(size_t rows, size_t cols, size_t channels)
     return eos_tensor3f_borrow(rows, cols, channels, data);
 }
 
-eos_tensor3f eos_tensor3f_borrow(size_t rows, size_t cols, size_t channels, float *data)
+Eos_Tensor3f eos_tensor3f_borrow(size_t rows, size_t cols, size_t channels, float *data)
 {
     assert(rows > 0 && cols > 0 && channels > 0);
-    return (eos_tensor3f) {
+    return (Eos_Tensor3f) {
         .rows = rows,
         .cols = cols,
         .channels = channels,
@@ -34,7 +34,7 @@ eos_tensor3f eos_tensor3f_borrow(size_t rows, size_t cols, size_t channels, floa
     };
 }
 
-void eos_tensor3f_free(eos_tensor3f *tensor)
+void eos_tensor3f_free(Eos_Tensor3f *tensor)
 {
     tensor->rows = tensor->cols = tensor->channels = tensor->row_stride = tensor->col_stride = tensor->channel_stride = tensor->dataoffset = 0;
     free(tensor->data);
@@ -42,7 +42,7 @@ void eos_tensor3f_free(eos_tensor3f *tensor)
     tensor = NULL;
 }
 
-void eos_tensor3f_print(eos_tensor3f tensor)
+void eos_tensor3f_print(Eos_Tensor3f tensor)
 {
     printf("[\n");
     for (size_t row = 0; row < tensor.rows; row++)
@@ -64,7 +64,7 @@ void eos_tensor3f_print(eos_tensor3f tensor)
 
 }
 
-void eos_tensor3f_info(eos_tensor3f tensor)
+void eos_tensor3f_info(Eos_Tensor3f tensor)
 {
     printf("Shape: (%zu, %zu, %zu)\n", tensor.rows, tensor.cols, tensor.channels);
     printf("Strides: (%zu, %zu, %zu)\n", tensor.row_stride, tensor.col_stride, tensor.channel_stride);
@@ -73,7 +73,7 @@ void eos_tensor3f_info(eos_tensor3f tensor)
 }
 
 
-void eos_tensor3f_random(eos_tensor3f tensor, float min, float max)
+void eos_tensor3f_random(Eos_Tensor3f tensor, float min, float max)
 {
     assert(min < max);
     float unit_random;
@@ -91,7 +91,7 @@ void eos_tensor3f_random(eos_tensor3f tensor, float min, float max)
 }
 
 
-void eos_tensor3f_fill(eos_tensor3f tensor, float value)
+void eos_tensor3f_fill(Eos_Tensor3f tensor, float value)
 {
     for (size_t row = 0; row < tensor.rows; row++)
     {
@@ -103,7 +103,7 @@ void eos_tensor3f_fill(eos_tensor3f tensor, float value)
     }
 }
 
-void eos_tensor3f_zero(eos_tensor3f tensor)
+void eos_tensor3f_zero(Eos_Tensor3f tensor)
 {
     eos_tensor3f_fill(tensor, 0.0f);
 }

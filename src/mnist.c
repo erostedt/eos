@@ -1,26 +1,25 @@
 #include "stdlib.h"
 #include "stdio.h"
-#include "stdint.h"
 #include "stdbool.h"
 #include "mnist.h"
 #include "assert.h"
 
 
-typedef struct mnist_features_header
+typedef struct Mnist_Features_Header
 {
     int32_t datatype;
     int32_t dims;
     int32_t num_datapoints;
     int32_t num_rows;
     int32_t num_cols;
-} _mnist_features_header;
+} Mnist_Features_Header;
 
-typedef struct mnist_labels_header
+typedef struct Mnist_Labels_Header
 {
     int32_t datatype;
     int32_t dims;
     int32_t num_datapoints;
-} _mnist_labels_header;
+} Mnist_Labels_Header;
  
 
 void _flip_int(int32_t *integer)
@@ -38,9 +37,9 @@ void _flip_int(int32_t *integer)
     *(byte + 1) = temp;
 }
 
-_mnist_features_header _read_feature_header(FILE *fp)
+Mnist_Features_Header _read_feature_header(FILE *fp)
 {
-    _mnist_features_header header;
+    Mnist_Features_Header header;
     fgetc(fp);
     fgetc(fp);
     header.datatype = fgetc(fp);
@@ -54,9 +53,9 @@ _mnist_features_header _read_feature_header(FILE *fp)
     return header;
 }
 
-_mnist_labels_header _read_label_header(FILE *fp)
+Mnist_Labels_Header _read_label_header(FILE *fp)
 {
-    _mnist_labels_header header;
+    Mnist_Labels_Header header;
     fgetc(fp);
     fgetc(fp);
     header.datatype = fgetc(fp);
@@ -68,7 +67,7 @@ _mnist_labels_header _read_label_header(FILE *fp)
     return header;
 }
 
-float *_read_mnist_pixels(FILE *fp, _mnist_features_header header)
+float *_read_mnist_pixels(FILE *fp, Mnist_Features_Header header)
 {
     float *pixels = (float*)malloc(header.num_datapoints * header.num_rows * header.num_cols * sizeof(float));
     size_t elems_per_feature = header.num_rows * header.num_cols;
@@ -83,7 +82,7 @@ float *_read_mnist_pixels(FILE *fp, _mnist_features_header header)
     return pixels;
 }
 
-uint8_t *_read_mnist_targets(FILE *fp, _mnist_labels_header header)
+uint8_t *_read_mnist_targets(FILE *fp, Mnist_Labels_Header header)
 {
     uint8_t *targets = (uint8_t*)malloc(header.num_datapoints * sizeof(uint8_t));
     for (size_t index = 0; index < (size_t)header.num_datapoints; index++)
@@ -110,8 +109,8 @@ bool load_mnist(mnist_t *mnist, const char *features_path, const char *labels_pa
         return false;
     }
 
-    _mnist_features_header feature_header = _read_feature_header(feature_fp);
-    _mnist_labels_header label_header = _read_label_header(labels_fp);
+    Mnist_Features_Header feature_header = _read_feature_header(feature_fp);
+    Mnist_Labels_Header label_header = _read_label_header(labels_fp);
 
     if (feature_header.datatype != label_header.datatype)
     {
@@ -135,7 +134,7 @@ bool load_mnist(mnist_t *mnist, const char *features_path, const char *labels_pa
     uint8_t *targets = _read_mnist_targets(labels_fp, label_header);
     fclose(labels_fp);
 
-    eos_tensor3f *features = (eos_tensor3f*)malloc(feature_header.num_datapoints * sizeof(eos_tensor3f));
+    Eos_Tensor3f *features = (Eos_Tensor3f*)malloc(feature_header.num_datapoints * sizeof(Eos_Tensor3f));
     size_t stepsize = feature_header.num_cols * feature_header.num_rows;
     for (size_t index = 0; index < (size_t)feature_header.num_datapoints; index++)
         features[index] = eos_tensor3f_borrow(feature_header.num_rows, feature_header.num_cols, 1, normalized_pixels + (index * stepsize));
@@ -160,7 +159,7 @@ Texture2D eos_tensor3f_grayscale_texture_alloc(eos_tensor3f tensor)
 }
 */
 
-void save_as_ppm(eos_tensor3f image, const char *file_path)
+void save_as_ppm(Eos_Tensor3f image, const char *file_path)
 {
     assert(image.channels == 1);
     FILE *f = fopen(file_path, "wb");
@@ -185,21 +184,4 @@ void save_as_ppm(eos_tensor3f image, const char *file_path)
     }
 
     fclose(f);
-}
-
-int32_t main()
-{   
-    const char *features = "./mnist/t10k-images.idx3-ubyte";
-    const char *targets = "./mnist/t10k-labels.idx1-ubyte";
-    
-    mnist_t mnist;
-    bool success = load_mnist(&mnist, features, targets);
-    if (!success)
-        return 1;
-
-    size_t idx = 0;
-    eos_tensor3f image = mnist.features[idx];
-    save_as_ppm(image, "image.ppm");
-
-    return 0;
 }

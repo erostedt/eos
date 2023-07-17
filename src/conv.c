@@ -30,16 +30,32 @@ float eos_deriv_relu(float x)
 }
 
 
-void eos_conv_batched_cross_corr(eos_batch4f dst, eos_batch4f batch, eos_batch4f filters)
+Eos_Conv_Layer eos_alloc_conv_layer(size_t num_filters, size_t filter_rows, size_t filter_cols, size_t filter_depth)
+{   
+    // FIXME.
+    return (Eos_Conv_Layer) 
+    {
+        .batch = NULL,
+        .filters = eos_batch_alloc_contigious(num_filters, filter_rows, filter_cols, filter_depth),
+        .filter_rows=filter_rows,
+        .filter_cols=filter_cols,
+        .filter_depth=filter_depth,
+        .filter_gradients=eos_batch_alloc_contigious(num_filters, filter_rows, filter_cols, filter_depth),
+        .local_gradients = NULL,
+    };
+}
+
+
+void eos_conv_batched_cross_corr(Eos_Batch4f dst, Eos_Batch4f batch, Eos_Batch4f filters)
 { 
     assert((dst.count == filters.count));
     for (size_t tensor_idx = 0; tensor_idx < batch.count; tensor_idx++)
     {
-        eos_tensor3f tensor = batch.tensors[tensor_idx];
-        eos_tensor3f feature_maps = dst.tensors[tensor_idx]; 
+        Eos_Tensor3f tensor = batch.tensors[tensor_idx];
+        Eos_Tensor3f feature_maps = dst.tensors[tensor_idx]; 
         for (size_t filter_idx = 0; filter_idx < filters.count; filter_idx++)
         {
-            eos_tensor3f filter = filters.tensors[filter_idx];
+            Eos_Tensor3f filter = filters.tensors[filter_idx];
             assert((filter.rows <= tensor.rows) && (filter.cols <= tensor.cols) && (filter.channels == tensor.channels));
             float sum;
             for (size_t imrow = 0; imrow < tensor.rows-filter.rows + 1; imrow++)
@@ -64,11 +80,11 @@ void eos_conv_batched_cross_corr(eos_batch4f dst, eos_batch4f batch, eos_batch4f
 }
 
 
-void eos_conv_clear_gradients(eos_conv_layer *layer)
+void eos_conv_clear_gradients(Eos_Conv_Layer *layer)
 {
     for (size_t filter_idx = 0; layer->filter_gradients.count; filter_idx++)
     {
-        eos_tensor3f filter_gradients = layer->filter_gradients.tensors[filter_idx];
+        Eos_Tensor3f filter_gradients = layer->filter_gradients.tensors[filter_idx];
         for (size_t row = 0; row < filter_gradients.rows; row++)
         {
             for (size_t col = 0; col < filter_gradients.cols; col++)
@@ -83,7 +99,7 @@ void eos_conv_clear_gradients(eos_conv_layer *layer)
 
     for (size_t gradient_idx = 0; gradient_idx < layer->local_gradients.count; gradient_idx++)
     {
-        eos_tensor3f gradients = layer->local_gradients.tensors[gradient_idx];
+        Eos_Tensor3f gradients = layer->local_gradients.tensors[gradient_idx];
         for (size_t row = 0; row < gradients.rows; row++)
         {
             for (size_t col = 0; col < gradients.cols; col++)
@@ -97,17 +113,17 @@ void eos_conv_clear_gradients(eos_conv_layer *layer)
     }
 }
 
-void eos_conv_fill_filter_gradients(eos_conv_layer *layer, eos_batch4f gradients)
+void eos_conv_fill_filter_gradients(Eos_Conv_Layer *layer, Eos_Batch4f gradients)
 {
     eos_conv_batched_cross_corr(layer->filter_gradients, layer->batch, gradients);
 }
 
-void eos_conv_apply_filter_gradients(eos_conv_layer *layer, float alpha)
+void eos_conv_apply_filter_gradients(Eos_Conv_Layer *layer, float alpha)
 {
     for (size_t filter_idx = 0; filter_idx < layer->filter_gradients.count; filter_idx++)
     {
-        eos_tensor3f filter = layer->filters.tensors[filter_idx];
-        eos_tensor3f gradients = layer->filter_gradients.tensors[filter_idx];
+        Eos_Tensor3f filter = layer->filters.tensors[filter_idx];
+        Eos_Tensor3f gradients = layer->filter_gradients.tensors[filter_idx];
         assert((filter.rows == gradients.rows) && (filter.cols == gradients.cols) && (filter.channels == gradients.channels));
         for (size_t row = 0; row < filter.rows; row++)
         {
@@ -122,14 +138,14 @@ void eos_conv_apply_filter_gradients(eos_conv_layer *layer, float alpha)
     }
 }
 
-void eos_conv_fill_local_gradients(eos_conv_layer *layer, eos_batch4f gradients)
+void eos_conv_fill_local_gradients(Eos_Conv_Layer *layer, Eos_Batch4f gradients)
 {
     // See if this can be sped up.
     for (size_t tensor_idx = 0; tensor_idx < gradients.count; tensor_idx++)
     {
-        eos_tensor3f inputs = layer->batch.tensors[tensor_idx];
-        eos_tensor3f incoming_gradients = gradients.tensors[tensor_idx];
-        eos_tensor3f local_gradients = layer->local_gradients.tensors[tensor_idx]; 
+        Eos_Tensor3f inputs = layer->batch.tensors[tensor_idx];
+        Eos_Tensor3f incoming_gradients = gradients.tensors[tensor_idx];
+        Eos_Tensor3f local_gradients = layer->local_gradients.tensors[tensor_idx]; 
         int inrows = (int)inputs.rows;
         int incols = (int)inputs.cols;
         int outrows = (int)incoming_gradients.rows;
@@ -144,7 +160,7 @@ void eos_conv_fill_local_gradients(eos_conv_layer *layer, eos_batch4f gradients)
             {
                 for (size_t filter_idx = 0; filter_idx < layer->filters.count; filter_idx++)
                 {
-                    eos_tensor3f filter = layer->filters.tensors[filter_idx];
+                    Eos_Tensor3f filter = layer->filters.tensors[filter_idx];
                     float sum = 0;
                     for (int outrow = 0; outrow < outrows; outrow++)
                     {
@@ -169,7 +185,7 @@ void eos_conv_fill_local_gradients(eos_conv_layer *layer, eos_batch4f gradients)
 }
 
 
-void eos_conv_forward(eos_conv_layer *layer,  eos_batch4f batch)
+void eos_conv_forward(Eos_Conv_Layer *layer,  Eos_Batch4f batch)
 {
     assert(batch.count <= layer->filter_gradients.count);
     assert((layer->filter_rows <= batch.tensors->rows) && (layer->filter_cols <= batch.tensors->cols) && (layer->filter_depth == batch.tensors->channels));
@@ -180,7 +196,7 @@ void eos_conv_forward(eos_conv_layer *layer,  eos_batch4f batch)
 
 
 
-void eos_conv_backward(eos_conv_layer *layer, eos_batch4f gradients, float alpha)
+void eos_conv_backward(Eos_Conv_Layer *layer, Eos_Batch4f gradients, float alpha)
 {
     eos_conv_clear_gradients(layer);
     eos_conv_fill_local_gradients(layer, gradients);
@@ -190,24 +206,24 @@ void eos_conv_backward(eos_conv_layer *layer, eos_batch4f gradients, float alpha
 
 
 
-size_t eos_conv_output_n_batch_size(eos_conv_layer *layer)
+size_t eos_conv_output_n_batch_size(Eos_Conv_Layer *layer)
 {
     return layer->batch.count;
 }
 
-size_t eos_conv_output_n_rows(eos_conv_layer *layer)
+size_t eos_conv_output_n_rows(Eos_Conv_Layer *layer)
 {
     assert (layer->batch.count > 0);
     return layer->batch.tensors[0].rows - layer->filter_rows + 1;
 }
 
-size_t eos_conv_output_n_cols(eos_conv_layer *layer)
+size_t eos_conv_output_n_cols(Eos_Conv_Layer *layer)
 {
     assert (layer->batch.count > 0);
     return layer->batch.tensors[0].cols - layer->filter_cols + 1;
 }
 
-size_t eos_conv_output_n_channels(eos_conv_layer *layer)
+size_t eos_conv_output_n_channels(Eos_Conv_Layer *layer)
 {
     return layer->filters.count;
 }
