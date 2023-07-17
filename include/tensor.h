@@ -1,5 +1,6 @@
 #ifndef _EOS_TENSOR_H
 #define _EOS_TENSOR_H
+#include "stdlib.h"
 
 #define TENSOR_IDX(tensor, row, col, channel) (tensor.dataoffset + (row) * tensor.row_stride + (col) * tensor.col_stride + (channel) * tensor.channel_stride)
 #define TENSOR_AT(tensor, row, col, channel) (tensor.data[TENSOR_IDX(tensor, row, col, channel)])
@@ -26,7 +27,5 @@ void eos_tensor3f_info(eos_tensor3f tensor);
 
 void eos_tensor3f_random(eos_tensor3f tensor, float min, float max);
 void eos_tensor3f_zero(eos_tensor3f tensor);
-
-void eos_tensor3f_cross_corr(eos_tensor3f dst, eos_tensor3f tensor, eos_tensor3f filter);
 
 #endif

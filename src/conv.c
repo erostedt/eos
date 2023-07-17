@@ -2,6 +2,7 @@
 #include "conv.h"
 #include "assert.h"
 #include "stdint.h"
+#include "stdlib.h"
 
 
 float eos_sigmoid(float x)

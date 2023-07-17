@@ -2,8 +2,8 @@
 #include "stdio.h"
 #include "stdint.h"
 #include "stdbool.h"
-#include "raylib.h" 
 #include "mnist.h"
+#include "assert.h"
 
 
 typedef struct mnist_features_header
@@ -146,6 +146,7 @@ bool load_mnist(mnist_t *mnist, const char *features_path, const char *labels_pa
     return true;
 }
 
+/*
 Texture2D eos_tensor3f_grayscale_texture_alloc(eos_tensor3f tensor)
 {
     return LoadTextureFromImage((Image)
@@ -157,39 +158,48 @@ Texture2D eos_tensor3f_grayscale_texture_alloc(eos_tensor3f tensor)
         .mipmaps = 1
     });
 }
+*/
+
+void save_as_ppm(eos_tensor3f image, const char *file_path)
+{
+    assert(image.channels == 1);
+    FILE *f = fopen(file_path, "wb");
+    if (f == NULL) 
+    {
+        fprintf(stderr, "ERROR: could not open file %s: %m\n", file_path);
+        exit(1);
+    }
+
+    fprintf(f, "P6\n%zu %zu 255\n", image.cols, image.rows);
+
+    for (size_t y = 0; y < image.rows; ++y) 
+    {
+        for (size_t x = 0; x < image.cols; ++x) 
+        {
+            float fpixel = TENSOR_AT(image, y, x, 0);
+            uint8_t pixel = fpixel * 255.0;
+            uint8_t buf[3] = {pixel, pixel, pixel};
+            
+            fwrite(buf, sizeof(buf), 1, f);
+        }
+    }
+
+    fclose(f);
+}
 
 int32_t main()
 {   
-    const int32_t WINDOW_WIDTH = 100;
-    const int32_t WINDOW_HEIGHT = 100;
-    const char *WINDOW_NAME = "MNIST IMAGE";
-    
-    const char *features = ".\\mnist\\t10k-images.idx3-ubyte";
-    const char *targets = ".\\mnist\\t10k-labels.idx1-ubyte";
+    const char *features = "./mnist/t10k-images.idx3-ubyte";
+    const char *targets = "./mnist/t10k-labels.idx1-ubyte";
     
     mnist_t mnist;
     bool success = load_mnist(&mnist, features, targets);
     if (!success)
         return 1;
 
-    SetTraceLogLevel(LOG_ERROR);
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME);
-
-    SetTargetFPS(60);
-
-    size_t idx = 3;
+    size_t idx = 0;
     eos_tensor3f image = mnist.features[idx];
+    save_as_ppm(image, "image.ppm");
 
-    Texture2D pre = eos_tensor3f_grayscale_texture_alloc(image);
-    printf("%d", mnist.targets[idx]);
-    while (!WindowShouldClose())
-    {
-        BeginDrawing();
-        DrawTexture(pre, 0, 0, WHITE);
-        EndDrawing();
-    };
-
-    UnloadTexture(pre);
-    CloseWindow();
     return 0;
 }

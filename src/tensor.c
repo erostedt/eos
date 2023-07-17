@@ -66,10 +66,10 @@ void eos_tensor3f_print(eos_tensor3f tensor)
 
 void eos_tensor3f_info(eos_tensor3f tensor)
 {
-    printf("Shape: (%lld, %lld, %lld)\n", tensor.rows, tensor.cols, tensor.channels);
-    printf("Strides: (%lld, %lld, %lld)\n", tensor.row_stride, tensor.col_stride, tensor.channel_stride);
-    printf("Num bytes: %lld\n", TENSOR_NBYTES(tensor));
-    printf("Data offset: %lld\n", tensor.dataoffset);
+    printf("Shape: (%zu, %zu, %zu)\n", tensor.rows, tensor.cols, tensor.channels);
+    printf("Strides: (%zu, %zu, %zu)\n", tensor.row_stride, tensor.col_stride, tensor.channel_stride);
+    printf("Num bytes: %zu\n", TENSOR_NBYTES(tensor));
+    printf("Data offset: %zu\n", tensor.dataoffset);
 }
 
 
