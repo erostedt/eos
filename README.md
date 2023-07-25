@@ -1,3 +1,9 @@
 TODO: 
 add arena_allocation for gradients.
-Seperate activation to its own layer.
+Add pooling layer
+Add flatten layer
+Add dense layer
+Add training loop
+
+
+Add license

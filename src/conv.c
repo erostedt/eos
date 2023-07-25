@@ -139,7 +139,6 @@ void eos_conv_forward(Eos_Conv_Layer *layer, Eos_Batch4f inputs, Eos_Batch4f out
             }
         }
     }
-    eos_activate(layer->activation, outputs);
 }
 
 
@@ -189,8 +188,6 @@ void eos_conv_backward(Eos_Conv_Layer *layer, Eos_Batch4f inputs, Eos_Batch4f in
             }
         }
     }
-
-    eos_dactivate(layer->activation, inputs, outgoing_gradients);
 
     for (size_t i = 0; i < layer->filters.count; i++)
     {
