@@ -29,14 +29,13 @@ Eos_Tensor3f eos_tensor3f_borrow(size_t rows, size_t cols, size_t channels, floa
         .row_stride = cols * channels,
         .col_stride = channels,
         .channel_stride = 1,
-        .dataoffset = 0,
         .data = data    
     };
 }
 
 void eos_tensor3f_free(Eos_Tensor3f *tensor)
 {
-    tensor->rows = tensor->cols = tensor->channels = tensor->row_stride = tensor->col_stride = tensor->channel_stride = tensor->dataoffset = 0;
+    tensor->rows = tensor->cols = tensor->channels = tensor->row_stride = tensor->col_stride = tensor->channel_stride = 0;
     free(tensor->data);
     tensor->data = NULL;
     tensor = NULL;
@@ -69,7 +68,6 @@ void eos_tensor3f_info(Eos_Tensor3f tensor)
     printf("Shape: (%zu, %zu, %zu)\n", tensor.rows, tensor.cols, tensor.channels);
     printf("Strides: (%zu, %zu, %zu)\n", tensor.row_stride, tensor.col_stride, tensor.channel_stride);
     printf("Num bytes: %zu\n", TENSOR_NBYTES(tensor));
-    printf("Data offset: %zu\n", tensor.dataoffset);
 }
 
 
